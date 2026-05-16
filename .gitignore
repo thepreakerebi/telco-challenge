@@ -10,7 +10,7 @@ data/processed/
 
 # Outputs and traces may contain competition run details.
 outputs/
+predictions/
 traces/
 submissions/*.csv
 submissions/*.zip
-
