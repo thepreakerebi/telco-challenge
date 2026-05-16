@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Challenge data can be large and may include gated files.
+data/raw/
+data/processed/
+
+# Outputs and traces may contain competition run details.
+outputs/
+traces/
+submissions/*.csv
+submissions/*.zip
+
