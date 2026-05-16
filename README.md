@@ -109,6 +109,14 @@ python scripts/evaluate_track_b_phase1.py \
   --predictions predictions/phase1_link_baseline.csv
 ```
 
+Track B live solver:
+
+```bash
+python scripts/solve_track_b.py \
+  --limit 1 \
+  --output predictions/track_b_live.csv
+```
+
 ## Build Submission
 
 Per-track prediction files must use:

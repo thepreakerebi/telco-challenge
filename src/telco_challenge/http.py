@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from typing import Any
 
 import requests
+import urllib3
+
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 @dataclass(frozen=True)
@@ -40,4 +44,3 @@ def _to_api_response(response: requests.Response) -> ApiResponse:
     except ValueError:
         payload = None
     return ApiResponse(status_code=response.status_code, payload=payload, text=response.text)
-
