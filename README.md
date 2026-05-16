@@ -94,6 +94,25 @@ TRACK_B_BEARER_TOKEN
 
 Track A needs the challenge server because Phase 2 telemetry fields are placeholders in the downloaded JSON.
 
+Build a supervised offline fallback from Phase 1 option text:
+
+```bash
+python scripts/evaluate_track_a_baseline.py
+
+python scripts/track_a_option_baseline.py \
+  --output predictions/track_a_option_baseline.csv
+```
+
+This baseline uses only option labels and should be treated as a fallback. Live telemetry from the Track A API is required for competitive Phase 2 answers.
+
+Evaluate the configured Qwen endpoint on a small public Phase 1 slice:
+
+```bash
+python scripts/evaluate_track_a_model.py --limit 10
+```
+
+The model-only evaluator is useful for validating prompts and provider behavior. Option-only answers are not expected to be competitive for Track A because Phase 2 telemetry must come from the challenge API.
+
 Examples:
 
 ```bash
