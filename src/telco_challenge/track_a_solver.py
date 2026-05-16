@@ -37,7 +37,7 @@ class TrackASolver:
         raw_response = self.model_client.complete(
             [{"role": "user", "content": prompt}],
             temperature=0.0,
-            max_tokens=700,
+            max_tokens=300,
         )
         prediction = extract_track_a_answer(raw_response, row)
         if not prediction:
@@ -45,7 +45,7 @@ class TrackASolver:
             raw_response = self.model_client.complete(
                 [{"role": "user", "content": repaired}],
                 temperature=0.0,
-                max_tokens=128,
+                max_tokens=96,
             )
             prediction = extract_track_a_answer(raw_response, row)
         return TrackASolveResult(scenario_id, prediction, raw_response, len(evidence))

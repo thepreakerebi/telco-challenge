@@ -113,7 +113,7 @@ class TrackBSolver:
         raw_response = self.model_client.complete(
             [{"role": "user", "content": prompt}],
             temperature=0.0,
-            max_tokens=900,
+            max_tokens=300,
         )
         prediction = normalize_common_faults(extract_track_b_answer(raw_response))
         if not prediction:
@@ -153,7 +153,7 @@ class TrackBSolver:
         return self.model_client.complete(
             [{"role": "user", "content": prompt}],
             temperature=0.0,
-            max_tokens=500,
+            max_tokens=220,
         )
 
     def collect_evidence(self, question_number: int, question: str) -> list[EvidenceItem]:
