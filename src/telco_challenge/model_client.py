@@ -30,6 +30,10 @@ class ChatClient:
             "messages": messages,
             "temperature": temperature,
             "max_tokens": max_tokens,
+            "reasoning": {
+                "effort": "none",
+                "exclude": True,
+            },
         }
         response = self.session.post(f"{self.base_url}/chat/completions", json=payload, timeout=self.timeout)
         if response.status_code >= 400:

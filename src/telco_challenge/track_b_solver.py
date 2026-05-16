@@ -204,6 +204,7 @@ def build_prompt(question: str, evidence: list[EvidenceItem]) -> str:
         "Solve the network troubleshooting task using only the provided command evidence.\n"
         "Return only the final answer lines. Do not include analysis, explanation, bullets, markdown, or code fences.\n"
         "For fault questions, each line must be fault-node;fault-port-or-destination;fault-reason.\n"
+        "Fault reasons must be exact reasons from the question. Do not invent reasons such as VRRP configuration error.\n"
         "For path questions, each line must be a -> separated path.\n\n"
         f"Question:\n{question}\n\n"
         f"Evidence:\n{evidence_text}\n\n"

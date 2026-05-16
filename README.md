@@ -115,6 +115,8 @@ Track B live solver:
 python scripts/solve_track_b.py \
   --limit 1 \
   --output predictions/track_b_live.csv
+
+python scripts/validate_track_b_predictions.py predictions/track_b_live.csv
 ```
 
 Command outputs are cached under `outputs/track_b_command_cache/` by default.
