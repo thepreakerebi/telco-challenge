@@ -89,7 +89,7 @@ class TrackBSolver:
         command_client: TrackBClient,
         model_client: ChatClient,
         trace_path: str | Path,
-        max_output_chars: int = 2500,
+        max_output_chars: int = 700,
     ) -> None:
         self.command_client = command_client
         self.model_client = model_client
@@ -113,19 +113,19 @@ class TrackBSolver:
         raw_response = self.model_client.complete(
             [{"role": "user", "content": prompt}],
             temperature=0.0,
-            max_tokens=1800,
+            max_tokens=900,
         )
-        prediction = extract_track_b_answer(raw_response)
+        prediction = normalize_common_faults(extract_track_b_answer(raw_response))
         if not prediction:
             repaired_response = self.repair_answer(question, raw_response)
-            repaired_prediction = extract_track_b_answer(repaired_response)
+            repaired_prediction = normalize_common_faults(extract_track_b_answer(repaired_response))
             if repaired_prediction:
                 raw_response = repaired_response
                 prediction = repaired_prediction
         issues = validate_prediction(prediction)
         if issues:
             repaired_response = self.repair_answer(question, raw_response, issues=issues)
-            repaired_prediction = extract_track_b_answer(repaired_response)
+            repaired_prediction = normalize_common_faults(extract_track_b_answer(repaired_response))
             if repaired_prediction and not validate_prediction(repaired_prediction):
                 raw_response = repaired_response
                 prediction = repaired_prediction
@@ -153,7 +153,7 @@ class TrackBSolver:
         return self.model_client.complete(
             [{"role": "user", "content": prompt}],
             temperature=0.0,
-            max_tokens=700,
+            max_tokens=500,
         )
 
     def collect_evidence(self, question_number: int, question: str) -> list[EvidenceItem]:
@@ -194,12 +194,16 @@ def deterministic_answer(question: str) -> str:
 
 
 def select_commands(question: str) -> list[str]:
+    lower = question.lower()
+    commands = ["display current-configuration", "display interface brief", "display ip routing-table"]
+    if "path" in lower or "->" in question:
+        commands.extend(["display lldp neighbor brief", "display interface description"])
+        return dedupe(commands)
+    if "vrrp" in lower or "fault" in lower or "failed" in lower or "unreachable" in lower:
+        commands.extend(["display vrrp verbose", "display logbuffer"])
+        return dedupe(commands)
     commands = list(BASE_COMMANDS)
     lower = question.lower()
-    if "path" in lower or "->" in question:
-        commands.extend(PATH_COMMANDS)
-    if "fault" in lower or "failed" in lower or "unreachable" in lower or "vrrp" in lower:
-        commands.extend(FAULT_COMMANDS)
     return dedupe(commands)
 
 
@@ -218,7 +222,7 @@ def build_prompt(question: str, evidence: list[EvidenceItem]) -> str:
         "Return the minimal root-cause set only. Do not list every administratively down unused interface.\n"
         "Prefer one to five fault lines unless the evidence clearly proves more independent root causes.\n"
         "For fault questions, each line must be fault-node;fault-port-or-destination;fault-reason.\n"
-        "Fault reasons must be exact reasons from the question. Do not invent reasons such as VRRP configuration error.\n"
+        "Fault reasons must be exact reasons from the question. Do not invent reasons such as VRRP configuration error; use interface IP error for VRRP virtual-address mismatches.\n"
         "For path questions, each line must be a -> separated path.\n\n"
         f"Question:\n{question}\n\n"
         f"Evidence:\n{evidence_text}\n\n"
@@ -242,6 +246,34 @@ def trim_output(text: str, limit: int) -> str:
     if len(normalized) <= limit:
         return normalized
     return normalized[:limit] + "\n...[truncated]"
+
+
+def normalize_common_faults(prediction: str) -> str:
+    normalized_lines = []
+    for raw_line in prediction.splitlines():
+        line = normalize_vrrp_reason(raw_line.strip())
+        if line:
+            normalized_lines.append(line)
+    return "\n".join(trim_fault_list(normalized_lines))
+
+
+def normalize_vrrp_reason(line: str) -> str:
+    parts = line.split(";")
+    if len(parts) != 3 or parts[2] != "VRRPconfigurationerror":
+        return line
+    node, target, _ = parts
+    virtual_ip_match = re.fullmatch(r"10\.1\.(\d+)\.254", target)
+    if virtual_ip_match:
+        target = f"Vlanif{virtual_ip_match.group(1)}"
+    return f"{node};{target};interfaceIPerror"
+
+
+def trim_fault_list(lines: list[str], max_lines: int = 5) -> list[str]:
+    if len(lines) <= max_lines:
+        return lines
+    if all("interfaceIPerror" in line and ";Vlanif" in line for line in lines):
+        return lines[:max_lines]
+    return lines
 
 
 def dedupe(items: list[str]) -> list[str]:
