@@ -117,6 +117,8 @@ python scripts/solve_track_b.py \
   --output predictions/track_b_live.csv
 ```
 
+Command outputs are cached under `outputs/track_b_command_cache/` by default.
+
 ## Build Submission
 
 Per-track prediction files must use:

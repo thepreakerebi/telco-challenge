@@ -37,6 +37,7 @@ def main() -> None:
     parser.add_argument("--output", default="predictions/track_b_live.csv")
     parser.add_argument("--command-trace", default="traces/track_b_commands.jsonl")
     parser.add_argument("--solve-trace", default="traces/track_b_solutions.jsonl")
+    parser.add_argument("--cache-dir", default="outputs/track_b_command_cache")
     parser.add_argument("--limit", type=int)
     parser.add_argument("--offset", type=int, default=0)
     parser.add_argument("--resume", action="store_true")
@@ -47,6 +48,7 @@ def main() -> None:
         endpoint_url=get_env("TRACK_B_SERVER_URL", DEFAULT_TRACK_B_URL),
         token=get_env("TRACK_B_BEARER_TOKEN", required=True),
         timeout=45.0,
+        cache_dir=args.cache_dir,
     )
     model_client = ChatClient(
         base_url=get_env("QWEN_MODEL_BASE_URL", required=True),
@@ -74,4 +76,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
