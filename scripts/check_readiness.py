@@ -8,7 +8,7 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from telco_challenge.config import load_project_env
+from telco_challenge.config import DEFAULT_TRACK_A_URL, DEFAULT_TRACK_B_URL, get_env, load_project_env
 from telco_challenge.submission import read_submission, validate_submission
 
 
@@ -39,10 +39,12 @@ def check_phase_count(path: Path, expected: int) -> tuple[bool, str]:
     return True, f"{path} has {actual} rows"
 
 
-def check_env(name: str) -> tuple[bool, str]:
-    value = os.getenv(name, "")
+def check_env(name: str, default: str | None = None) -> tuple[bool, str]:
+    value = get_env(name, default)
     if not value:
         return False, f"{name} is not set"
+    if default and name not in os.environ:
+        return True, f"{name} uses default"
     return True, f"{name} is set"
 
 
@@ -64,16 +66,13 @@ def main() -> None:
         issues = validate_submission(read_submission(sample_path))
         checks.append((not issues, "sample submission schema is valid" if not issues else "; ".join(issues)))
 
-    for name in [
-        "TRACK_A_SERVER_URL",
-        "TRACK_A_BEARER_TOKEN",
-        "TRACK_B_SERVER_URL",
-        "TRACK_B_BEARER_TOKEN",
-        "QWEN_MODEL_BASE_URL",
-        "QWEN_MODEL_NAME",
-        "QWEN_MODEL_API_KEY",
-    ]:
-        checks.append(check_env(name))
+    checks.append(check_env("TRACK_A_SERVER_URL", DEFAULT_TRACK_A_URL))
+    checks.append(check_env("TRACK_A_BEARER_TOKEN"))
+    checks.append(check_env("TRACK_B_SERVER_URL", DEFAULT_TRACK_B_URL))
+    checks.append(check_env("TRACK_B_BEARER_TOKEN"))
+    checks.append(check_env("QWEN_MODEL_BASE_URL"))
+    checks.append(check_env("QWEN_MODEL_NAME", "qwen/qwen3.5-35b-a3b"))
+    checks.append(check_env("QWEN_MODEL_API_KEY"))
 
     failed = False
     for ok, message in checks:
@@ -87,4 +86,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
