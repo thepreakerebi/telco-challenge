@@ -88,6 +88,8 @@ python scripts/track_a_call.py tools
 python scripts/solve_track_a.py \
   --limit 1 \
   --output predictions/track_a_live.csv
+
+python scripts/validate_track_a_predictions.py predictions/track_a_live.csv
 ```
 
 Track B local command lookup:
