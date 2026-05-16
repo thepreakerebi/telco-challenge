@@ -8,6 +8,7 @@ from pathlib import Path
 from telco_challenge.answer_extraction import extract_track_b_answer
 from telco_challenge.model_client import ChatClient
 from telco_challenge.track_b import CommandResult, TrackBClient, append_trace
+from telco_challenge.track_b_validation import validate_prediction
 
 
 NETWORK_DEVICES = [
@@ -121,6 +122,13 @@ class TrackBSolver:
             if repaired_prediction:
                 raw_response = repaired_response
                 prediction = repaired_prediction
+        issues = validate_prediction(prediction)
+        if issues:
+            repaired_response = self.repair_answer(question, raw_response, issues=issues)
+            repaired_prediction = extract_track_b_answer(repaired_response)
+            if repaired_prediction and not validate_prediction(repaired_prediction):
+                raw_response = repaired_response
+                prediction = repaired_prediction
         return SolveResult(
             scenario_id=row["scenario_id"],
             question_number=question_number,
@@ -129,12 +137,15 @@ class TrackBSolver:
             command_count=len(evidence),
         )
 
-    def repair_answer(self, question: str, raw_response: str) -> str:
+    def repair_answer(self, question: str, raw_response: str, issues: list[str] | None = None) -> str:
+        issue_text = "\n".join(issues or [])
         prompt = (
             "/no_think\n"
             "Convert the response below into only the final answer lines required by the question.\n"
-            "Do not explain. Do not include markdown. If the response has enough information, output only the final lines.\n\n"
+            "Do not explain. Do not include markdown. If the response has enough information, output only the final lines.\n"
+            "Use only fault reasons listed in the question.\n\n"
             f"Question:\n{question}\n\n"
+            f"Validation issues to fix:\n{issue_text or 'none'}\n\n"
             f"Response:\n{raw_response}\n\n"
             "Final answer:"
         )
